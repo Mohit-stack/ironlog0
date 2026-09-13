@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IronLog - Strength & PR Tracker</title>
+    <style>
+        :root {
+            --bg-color: #121214;
+            --surface-color: #1a1a1e;
+            --surface-card: #222228;
+            --primary: #f59e0b;
+            --primary-hover: #d97706;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border-color: #2e2e38;
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding-bottom: 80px;
+        }
+
+        header {
+            background-color: var(--surface-color);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: var(--primary);
+            text-transform: uppercase;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .view {
+            display: none;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        /* Bottom Navigation */
+        nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--surface-color);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 0.75rem 0;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-btn.active {
+            color: var(--primary);
+        }
+
+        /* Cards and Elements */
+        .card {
+            background-color: var(--surface-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--text-main);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Buttons & Forms */
+        button.primary-btn {
+            background-color: var(--primary);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+
+        button.primary-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button.secondary-btn {
+            background-color: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        button.danger-btn {
+            background-color: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            border-radius: 6px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        input, select {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-main);
+            padding: 0.65rem;
+            font-size: 0.95rem;
+            width: 100%;
+            margin-bottom: 0.75rem;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Workout Logger View */
+        .set-row {
+            display: grid;
+            grid-template-columns: 40px 1fr 1fr 40px;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .set-row input {
+            margin-bottom: 0;
+            text-align: center;
+        }
+
+        .set-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .pr-badge {
+            background-color: rgba(245, 158, 11, 0.15);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .exercise-block {
+            border-left: 3px solid var(--primary);
+            padding-left: 10px;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Plate Calculator Modal/Card */
+        .plate-list {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+
+        .plate-chip {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 2rem 0;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>IronLog</h1>
+    </header>
+
+    <div class="container">
+        
+        <!-- WORKOUT VIEW -->
+        <div id="workout-view" class="view active">
+            <div id="active-workout-container">
+                <div class="empty-state" id="no-workout-state">
+                    <p>No active workout session.</p>
+                    <button class="primary-btn" style="margin-top: 1rem;" onclick="startWorkout()">Start Workout</button>
+                </div>
+
+                <div id="active-workout-content" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h2 id="workout-timer" style="font-size: 1.1rem; font-weight: 600;">Workout in Progress</h2>
+                        <button class="secondary-btn" style="color: var(--danger); border-color: var(--danger);" onclick="finishWorkout()">Finish Workout</button>
+                    </div>
+
+                    <div id="exercises-container"></div>
+
+                    <div style="display: flex; gap: 8px; margin-top: 1rem;">
+                        <select id="exercise-selector"></select>
+                        <button class="secondary-btn" style="white-space: nowrap;" onclick="addExerciseToWorkout()">Add Exercise</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PRs & HISTORY VIEW -->
+        <div id="prs-view" class="view">
+            <h2 style="font-size: 1.1rem; margin-bottom: 1rem; font-weight: 600;">Personal Records</h2>
+            <div id="pr-list-container"></div>
+
+            <h2 style="font-size: 1.1rem; margin: 1.5rem 0 1rem 0; font-weight: 600;">Past Workouts</h2>
+            <div id="history-list-container"></div>
+        </div>
+
+        <!-- TOOLS VIEW (Plate Calculator & Custom Exercise Creator) -->
+        <div id="tools-view" class="view">
+            <div class="card">
+                <div class="card-title">Plate Calculator</div>
+                <label>Target Weight (kg/lbs)</label>
+                <input type="number" id="calc-target" placeholder="e.g. 100" oninput="calculatePlates()">
+                <label>Bar Weight</label>
+                <input type="number" id="calc-bar" value="20" oninput="calculatePlates()">
+                <div id="plate-results" style="margin-top: 0.75rem; font-size: 0.9rem;">
+                    Enter a target weight above.
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Add Custom Exercise</div>
+                <label>Exercise Name</label>
+                <input type="text" id="new-ex-name" placeholder="e.g. Barbell Row">
+                <label>Category</label>
+                <select id="new-ex-cat">
+                    <option value="Barbell">Barbell</option>
+                    <option value="Machine">Machine</option>
+                    <option value="Dumbbell">Dumbbell</option>
+                    <option value="Bodyweight">Bodyweight</option>
+                </select>
+                <button class="primary-btn" style="margin-top: 0.5rem;" onclick="addNewExerciseDef()">Save Exercise</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav>
+        <button class="nav-btn active" onclick="switchView('workout', this)">
+            <span>🏋️‍♂️</span> Workout
+        </button>
+        <button class="nav-btn" onclick="switchView('prs', this)">
+            <span>🏆</span> PRs & History
+        </button>
+        <button class="nav-btn" onclick="switchView('tools', this)">
+            <span>🧮</span> Tools
+        </button>
+    </nav>
+
+    <script>
+        // --- App State & Local Storage Initialization ---
+        let db = JSON.parse(localStorage.getItem('ironlog_db')) || {
+            exercises: [
+                { id: '1', name: 'Free Squat', category: 'Barbell' },
+                { id: '2', name: 'Smith Machine Squat', category: 'Machine' },
+                { id: '3', name: 'Bench Press', category: 'Barbell' },
+                { id: '4', name: 'Deadlift', category: 'Barbell' },
+                { id: '5', name: 'Barbell Row', category: 'Barbell' }
+            ],
+            workouts: [],
+            prs: {} // exerciseId -> { maxWeight, maxEstimated1RM, date }
+        };
+
+        let activeWorkout = JSON.parse(localStorage.getItem('ironlog_active')) || null;
+
+        function saveDB() {
+            localStorage.setItem('ironlog_db', JSON.stringify(db));
+        }
+
+        function saveActiveWorkout() {
+            localStorage.setItem('ironlog_active', JSON.stringify(activeWorkout));
+        }
+
+        // --- Navigation ---
+        function switchView(viewName, btnEl) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            
+            if(viewName === 'workout') document.getElementById('workout-view').classList.add('active');
+            if(viewName === 'prs') {
+                document.getElementById('prs-view').classList.add('active');
+                renderPRsAndHistory();
+            }
+            if(viewName === 'tools') document.getElementById('tools-view').classList.add('active');
+            
+            btnEl.classList.add('active');
+        }
+
+        // --- Workout Execution ---
+        function startWorkout() {
+            activeWorkout = {
+                id: Date.now(),
+                date: new Date().toLocaleDateString(),
+                exercises: []
+            };
+            saveActiveWorkout();
+            renderActiveWorkout();
+        }
+
+        function renderActiveWorkout() {
+            const noWorkoutEl = document.getElementById('no-workout-state');
+            const contentEl = document.getElementById('active-workout-content');
+            
+            if (!activeWorkout) {
+                noWorkoutEl.style.display = 'block';
+                contentEl.style.display = 'none';
+                return;
+            }
+
+            noWorkoutEl.style.display = 'none';
+            contentEl.style.display = 'block';
+
+            // Populate exercise dropdown
+            const selector = document.getElementById('exercise-selector');
+            selector.innerHTML = db.exercises.map(ex => `<option value="${ex.id}">${ex.name}</option>`).join('');
+
+            // Render active exercises
+            const container = document.getElementById('exercises-container');
+            if (activeWorkout.exercises.length === 0) {
+                container.innerHTML = '<div class="empty-state">No exercises added to this session yet.</div>';
+                return;
+            }
+
+            container.innerHTML = activeWorkout.exercises.map((exItem, exIndex) => {
+                const exerciseDef = db.exercises.find(e => e.id === exItem.exerciseId);
+                return `
+                    <div class="card exercise-block">
+                        <div class="card-title">
+                            <span>${exerciseDef ? exerciseDef.name : 'Unknown'}</span>
+                            <button class="danger-btn" onclick="removeExerciseFromWorkout(${exIndex})">Remove</button>
+                        </div>
+                        <div class="set-row">
+                            <span class="set-label">SET</span>
+                            <span class="set-label">WEIGHT</span>
+                            <span class="set-label">REPS</span>
+                            <span></span>
+                        </div>
+                        <div id="sets-for-${exIndex}">
+                            ${exItem.sets.map((set, setIndex) => `
+                                <div class="set-row">
+                                    <span class="set-label">${setIndex + 1}</span>
+                                    <input type="number" value="${set.weight}" onchange="updateSet(${exIndex}, ${setIndex}, 'weight', this.value)">
+                                    <input type="number" value="${set.reps}" onchange="updateSet(${exIndex}, ${setIndex}, 'reps', this.value)">
+                                    <button class="danger-btn" onclick="removeSet(${exIndex}, ${setIndex})">✕</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button class="secondary-btn" style="margin-top: 0.5rem; width: 100%;" onclick="addSet(${exIndex})">+ Add Set</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function addExerciseToWorkout() {
+            const selector = document.getElementById('exercise-selector');
+            const exerciseId = selector.value;
+            if (!exerciseId) return;
+
+            // Find last logged weight/reps for this exercise to prefill intelligently
+            let lastWeight = '';
+            let lastReps = '';
+            for (let w of db.workouts) {
+                const found = w.exercises.find(e => e.exerciseId === exerciseId);
+                if (found && found.sets.length > 0) {
+                    const lastSet = found.sets[found.sets.length - 1];
+                    lastWeight = lastSet.weight;
+                    lastReps = lastSet.reps;
+                    break;
+                }
+            }
+
+            activeWorkout.exercises.push({
+                exerciseId: exerciseId,
+                sets: [{ weight: lastWeight, reps: lastReps }]
+            });
+            saveActiveWorkout();
+            renderActiveWorkout();
+        }
+
+        function removeExerciseFromWorkout(exIndex) {
+            activeWorkout.exercises.splice(exIndex, 1);
+            saveActiveWorkout();
+            renderActiveWorkout();
+        }
+
+        function addSet(exIndex) {
+            const sets = activeWorkout.exercises[exIndex].sets;
+            const lastSet = sets.length > 0 ? sets[sets.length - 1] : { weight: '', reps: '' };
+            sets.push({ weight: lastSet.weight, reps: lastSet.reps });
+            saveActiveWorkout();
+            renderActiveWorkout();
+        }
+
+        function removeSet(exIndex, setIndex) {
+            activeWorkout.exercises[exIndex].sets.splice(setIndex, 1);
+            saveActiveWorkout();
+            renderActiveWorkout();
+        }
+
+        function updateSet(exIndex, setIndex, field, value) {
+            activeWorkout.exercises[exIndex].sets[setIndex][field] = parseFloat(value) || 0;
+            saveActiveWorkout();
+        }
+
+        function finishWorkout() {
+            if (!activeWorkout || activeWorkout.exercises.length === 0) {
+                activeWorkout = null;
+                saveActiveWorkout();
+                renderActiveWorkout();
+                return;
+            }
+
+            // Evaluate PRs
+            activeWorkout.exercises.forEach(item => {
+                item.sets.forEach(set => {
+                    const weight = parseFloat(set.weight) || 0;
+                    const reps = parseFloat(set.reps) || 0;
+                    if (weight <= 0 || reps <= 0) return;
+
+                    // Epley 1RM Formula estimation
+                    const est1RM = weight * (1 + reps / 30);
+                    
+                    if (!db.prs[item.exerciseId]) {
+                        db.prs[item.exerciseId] = { maxWeight: weight, maxEst1RM: est1RM, date: activeWorkout.date };
+                    } else {
+                        if (weight > db.prs[item.exerciseId].maxWeight) {
+                            db.prs[item.exerciseId].maxWeight = weight;
+                            db.prs[item.exerciseId].date = activeWorkout.date;
+                        }
+                        if (est1RM > db.prs[item.exerciseId].maxEst1RM) {
+                            db.prs[item.exerciseId].maxEst1RM = est1RM;
+                        }
+                    }
+                });
+            });
+
+            db.workouts.unshift(activeWorkout);
+            activeWorkout = null;
+            saveActiveWorkout();
+            saveDB();
+            renderActiveWorkout();
+            alert('Workout successfully saved and records evaluated!');
+        }
+
+        // --- PRs & History View ---
+        function renderPRsAndHistory() {
+            const prContainer = document.getElementById('pr-list-container');
+            const historyContainer = document.getElementById('history-list-container');
+
+            // Render PRs
+            const prKeys = Object.keys(db.prs);
+            if (prKeys.length === 0) {
+                prContainer.innerHTML = '<div class="empty-state">No personal records logged yet.</div>';
+            } else {
+                prContainer.innerHTML = prKeys.map(exId => {
+                    const exDef = db.exercises.find(e => e.id === exId);
+                    const pr = db.prs[exId];
+                    return `
+                        <div class="card" style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong style="font-size: 0.95rem;">${exDef ? exDef.name : 'Exercise'}</strong>
+                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Hit on ${pr.date}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="font-size: 1.05rem; font-weight: 700; color: var(--primary);">${pr.maxWeight} kg</span>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">Est. 1RM: ${Math.round(pr.maxEst1RM)} kg</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Render History
+            if (db.workouts.length === 0) {
+                historyContainer.innerHTML = '<div class="empty-state">No workout history available.</div>';
+            } else {
+                historyContainer.innerHTML = db.workouts.map(w => `
+                    <div class="card">
+                        <div class="card-title">
+                            <span>Workout Session</span>
+                            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal;">${w.date}</span>
+                        </div>
+                        ${w.exercises.map(e => {
+                            const exDef = db.exercises.find(item => item.id === e.exerciseId);
+                            return `
+                                <div style="margin-bottom: 0.5rem; font-size: 0.85rem;">
+                                    <strong>${exDef ? exDef.name : 'Exercise'}</strong>: 
+                                    ${e.sets.map(s => `${s.weight}kg × ${s.reps}`).join(', ')}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `).join('');
+            }
+        }
+
+        // --- Tools (Plate Calculator & Exercise Creator) ---
+        function calculatePlates() {
+            const target = parseFloat(document.getElementById('calc-target').value);
+            const bar = parseFloat(document.getElementById('calc-bar').value) || 20;
+            const resultsEl = document.getElementById('plate-results');
+
+            if (isNaN(target) || target <= bar) {
+                resultsEl.innerHTML = 'Target weight must be greater than bar weight.';
+                return;
+            }
+
+            let weightPerSide = (target - bar) / 2;
+            if (weightPerSide < 0) {
+                resultsEl.innerHTML = 'Target weight is less than the bar.';
+                return;
+            }
+
+            const availablePlates = [25, 20, 15, 10, 5, 2.5, 1.25];
+            let breakdown = [];
+
+            for (let plate of availablePlates) {
+                while (weightPerSide >= plate) {
+                    breakdown.push(plate);
+                    weightPerSide -= plate;
+                    weightPerSide = Math.round(weightPerSide * 100) / 100; // fix float issues
+                }
+            }
+
+            resultsEl.innerHTML = `
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Per Side Plate Breakdown:</div>
+                <div class="plate-list">
+                    ${breakdown.length > 0 ? breakdown.map(p => `<span class="plate-chip">${p} kg</span>`).join('') : '<span style="font-size: 0.85rem;">None (Just the bar)</span>'}
+                </div>
+            `;
+        }
+
+        function addNewExerciseDef() {
+            const name = document.getElementById('new-ex-name').value.trim();
+            const category = document.getElementById('new-ex-cat').value;
+
+            if (!name) {
+                alert('Please enter an exercise name.');
+                return;
+            }
+
+            const newId = Date.now().toString();
+            db.exercises.push({ id: newId, name, category });
+            saveDB();
+
+            document.getElementById('new-ex-name').value = '';
+            alert('Exercise created successfully!');
+        }
+
+        // Initial render checks
+        if (activeWorkout) {
+            renderActiveWorkout();
+        }
+    </script>
+</body>
+</html>
